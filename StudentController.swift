@@ -1,4 +1,4 @@
-//
+ //
 //  StudentController.swift
 //  StudentPutApi
 //
@@ -10,20 +10,20 @@ import Foundation
 
 class StudentController {
     
-
-//    work:
-//        -Endpoints
-//        -Function for getting students
-//        -Function for adding a student
+    
+    //    work:
+    //        -Endpoints
+    //        -Function for getting students
+    //        -Function for adding a student
     
     //============================
     //  Mark: - Properties
     //============================
     
-    static var baseURL = URL(string: "https://names-e4301.firebaseio.com/students")
+    static var baseURL = URL(string: "https://names-e4301.firebaseio.com/students")!
     
     // adds to .json to the base url
-    static var getterEndpoint = baseURL?.appendPathExtension("json")
+    static var getterEndpoint = baseURL.appendingPathExtension("json")
     
     //============================
     //  Mark: - Methods
@@ -35,7 +35,7 @@ class StudentController {
         let student = Student(name: name)
         
         // Add the student name to the URL
-        guard let url = baseURL?.appendingPathComponent(name).appendingPathExtension("json") else { return }
+        let url = baseURL.appendingPathComponent(name).appendingPathExtension("json")
         
         // Call the NetworkController to send the data to FireBase
         NetworkController.performRequest(for: url, httpMethod: .Put, body: student.jsonData) { (data, error) in
@@ -49,6 +49,7 @@ class StudentController {
                 }
                 
             }
+            // See whether or not it woked
             
             guard let responseDataString = String(data: data!, encoding: .utf8) else { return }
             
@@ -66,7 +67,28 @@ class StudentController {
             
         }
         
-        // See whether or not it woked
     }
+    
+    static func fetchStudents(completion: @escaping ([Student]) -> Void) {
+        
+        NetworkController.performRequest(for: StudentController.getterEndpoint, httpMethod: .Get) { (data, error) in
+            
+            guard let data = data else {
+                completion([])
+                return
+            }
+            
+            guard let studentDict = (try? JSONSerialization.jsonObject(with: data, options: [.allowFragments]) as? [String: [String: String]] else {
+                
+                completion([])
+                return
+            }
+            
+            let students = studentDict.flatMap { Student(dictionary: $0.1) }
+            completion(students)
+        }
+        
+    }
+    
     
 }
